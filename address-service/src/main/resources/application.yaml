@@ -1,0 +1,23 @@
+server:
+  port: 8092
+
+kafka:
+  bootstrap-servers: localhost:29092
+  consumer-group: address-service
+
+spring:
+  kafka:
+    streams:
+      bootstrap-servers: ${kafka.bootstrap-servers}
+      application-id: address-service
+    bootstrap-servers: ${kafka.bootstrap-servers}
+    properties:
+      security.protocol: PLAINTEXT
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: '*'
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer

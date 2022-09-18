@@ -1,0 +1,44 @@
+{
+  "result": [
+    {
+      "data": [
+        {
+          "dataField": "USER_FIRSTNAME",
+          "value": "Jan"
+        },
+        {
+          "dataField": "USER_LASTNAME",
+          "value": "Nowak"
+        },
+        {
+          "dataField": "ADDRESS_STREET",
+          "value": "ul. Grunwaldzka"
+        },
+        {
+          "dataField": "USER_PARENT_LASTNAME",
+          "value": "Nowak"
+        }
+      ]
+    },
+    {
+      "data": [
+        {
+          "dataField": "USER_FIRSTNAME",
+          "value": "Ola"
+        },
+        {
+          "dataField": "USER_LASTNAME",
+          "value": "Kowalska"
+        },
+        {
+          "dataField": "ADDRESS_STREET",
+          "value": "ul. Mickiewicza"
+        },
+        {
+          "dataField": "USER_PARENT_LASTNAME",
+          "value": "Wisniewski"
+        }
+      ]
+    }
+  ]
+}

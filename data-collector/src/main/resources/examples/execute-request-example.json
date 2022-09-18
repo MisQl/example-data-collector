@@ -1,0 +1,52 @@
+{
+  "orders": [
+    {
+      "data": [
+        {
+          "dataField": "USER_ID",
+          "value": 10000
+        },
+        {
+          "dataField": "ADDRESS_ID",
+          "value": 20000
+        }
+      ]
+    },
+    {
+      "data": [
+        {
+          "dataField": "USER_ID",
+          "value": 10001
+        },
+        {
+          "dataField": "ADDRESS_ID",
+          "value": 20001
+        }
+      ]
+    }
+  ],
+  "model": {
+    "input": [
+      {
+        "dataField": "USER_ID"
+      },
+      {
+        "dataField": "ADDRESS_ID"
+      }
+    ],
+    "output": [
+      {
+        "dataField": "USER_FIRSTNAME"
+      },
+      {
+        "dataField": "USER_LASTNAME"
+      },
+      {
+        "dataField": "ADDRESS_STREET"
+      },
+      {
+        "dataField": "USER_PARENT_LASTNAME"
+      }
+    ]
+  }
+}
