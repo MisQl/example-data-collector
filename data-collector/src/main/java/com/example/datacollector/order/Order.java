@@ -18,14 +18,15 @@ public class Order {
     @Setter
     private String id;
     private Set<Data> inputData;
-    @Getter
     private Set<Data> outputData;
+    private Set<DataField> outputModel;
     private Set<SimpleStep> simpleSteps;
 
-    public static Order newOrder(Set<Data> inputData, Set<SimpleStep> simpleSteps) {
+    public static Order newOrder(Set<Data> inputData, Set<DataField> outputModel, Set<SimpleStep> simpleSteps) {
         var order = new Order();
         order.inputData = new HashSet<>(inputData);
         order.simpleSteps = new HashSet<>(simpleSteps);
+        order.outputModel = new HashSet<>(outputModel);
         order.outputData = new HashSet<>();
         return order;
     }
@@ -51,6 +52,15 @@ public class Order {
     }
 
     public boolean isDone() {
-        return simpleSteps.isEmpty();
+        return simpleSteps.isEmpty() && outputData.stream()
+                .map(Data::getDataField)
+                .collect(Collectors.toSet())
+                .containsAll(outputModel);
+    }
+
+    public Set<Data> getOutputData() {
+        return this.outputData.stream()
+                .filter(o -> outputModel.contains(o.getDataField()))
+                .collect(Collectors.toSet());
     }
 }

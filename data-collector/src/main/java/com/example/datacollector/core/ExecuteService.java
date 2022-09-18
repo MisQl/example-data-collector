@@ -27,7 +27,7 @@ public class ExecuteService {
                 .collect(Collectors.toSet());
 
         var orderIds = orderRequests.stream()
-                .map(orderRequest -> orderService.collect(orderRequest, orderSteps))
+                .map(orderRequest -> orderService.collect(orderRequest, outputModel, orderSteps))
                 .collect(Collectors.toSet());
 
         var isDone = false;

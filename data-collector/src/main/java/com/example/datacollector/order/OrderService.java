@@ -18,14 +18,14 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final EventPublisher eventPublisher;
 
-    public String collect(OrderRequest orderRequest, Set<List<DataField>> orderSteps) {
+    public String collect(OrderRequest orderRequest, Set<DataField> outputModel, Set<List<DataField>> orderSteps) {
         var inputData = orderRequest.getData();
         var simpleSteps = orderSteps.stream()
                 .map(this::splitStep)
                 .flatMap(List::stream)
                 .collect(Collectors.toSet());
 
-        var order = Order.newOrder(inputData, simpleSteps);
+        var order = Order.newOrder(inputData, outputModel, simpleSteps);
 
         order = orderRepository.save(order);
         var orderId = order.getId();
