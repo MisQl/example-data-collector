@@ -28,7 +28,7 @@ public class UserProviderEventStream {
     private final List<DataProvider> dataProviders;
 
     @Autowired
-    void addressStream(StreamsBuilder streamsBuilder) {
+    void userStream(StreamsBuilder streamsBuilder) {
         streamsBuilder
                 .stream(DATA_COLLECT_REQUEST_TOPIC, Consumed.with(Serdes.String(), SerdeFactory.Json(CollectEventRequestV1.class)))
                 .filter((key, event) -> dataProviders.stream().anyMatch(dataProvider -> dataProvider.supports(event)))

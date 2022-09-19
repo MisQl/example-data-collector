@@ -44,6 +44,5 @@ public class UserParentDataProvider implements DataProvider {
         }
 
         throw new RuntimeException("Data cannot be collected, outputModel: " + outputModel + " source: " + source);
-
     }
 }
