@@ -1,7 +1,7 @@
 package com.example.userservice.providers;
 
 import com.example.datacollector.core.Data;
-import com.example.datacollector.core.DataField;
+import com.example.datacollector.core.DataProvider;
 import com.example.event.CollectEventRequestV1;
 import com.example.event.CollectEventResponseV1;
 import com.example.userservice.kafka.SerdeFactory;
@@ -14,6 +14,9 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static com.example.userservice.kafka.KafkaTopics.DATA_COLLECT_REQUEST_TOPIC;
 import static com.example.userservice.kafka.KafkaTopics.DATA_COLLECT_RESULT_TOPIC;
 
@@ -22,84 +25,29 @@ import static com.example.userservice.kafka.KafkaTopics.DATA_COLLECT_RESULT_TOPI
 @RequiredArgsConstructor
 public class UserProviderEventStream {
 
-    private final UserFirstnameProvider userFirstnameProvider;
-    private final UserLastnameProvider userLastnameProvider;
-    private final UserParentIdProvider userParentIdProvider;
-    private final UserParentFirstnameProvider userParentFirstnameProvider;
-    private final UserParentLastnameProvider userParentLastnameProvider;
+    private final List<DataProvider> dataProviders;
 
     @Autowired
-    void userFirstnameStream(StreamsBuilder streamsBuilder) {
+    void addressStream(StreamsBuilder streamsBuilder) {
         streamsBuilder
                 .stream(DATA_COLLECT_REQUEST_TOPIC, Consumed.with(Serdes.String(), SerdeFactory.Json(CollectEventRequestV1.class)))
-                .filter((k, v) -> DataField.USER_ID.equals(v.source()))
-                .filter((k, v) -> DataField.USER_FIRSTNAME.equals(v.destination()))
-                .peek((k, v) -> log.info("---> PROCESSING: " + v))
-                .mapValues((k, v) -> {
-                    var data = new Data(v.source(), v.sourceValue());
-                    return userFirstnameProvider.get(data).map(d -> new CollectEventResponseV1(v.orderId(), v.source(), v.destination(), v.sourceValue(), d.getValue()))
-                            .orElseThrow(() -> new RuntimeException("Missing " + v.destination() + " for " + data.getDataField() + ": " + data.getValue()));
-                })
+                .filter((key, event) -> dataProviders.stream().anyMatch(dataProvider -> dataProvider.supports(event)))
+                .peek((key, event) -> log.info("---> PROCESSING: " + event))
+                .mapValues((k, v) -> collectData(v))
                 .to(DATA_COLLECT_RESULT_TOPIC, Produced.with(Serdes.String(), SerdeFactory.Json(CollectEventResponseV1.class)));
     }
 
-    @Autowired
-    void userLastnameStream(StreamsBuilder streamsBuilder) {
-        streamsBuilder
-                .stream(DATA_COLLECT_REQUEST_TOPIC, Consumed.with(Serdes.String(), SerdeFactory.Json(CollectEventRequestV1.class)))
-                .filter((k, v) -> DataField.USER_ID.equals(v.source()))
-                .filter((k, v) -> DataField.USER_LASTNAME.equals(v.destination()))
-                .peek((k, v) -> log.info("---> PROCESSING: " + v))
-                .mapValues((k, v) -> {
-                    var data = new Data(v.source(), v.sourceValue());
-                    return userLastnameProvider.get(data).map(d -> new CollectEventResponseV1(v.orderId(), v.source(), v.destination(), v.sourceValue(), d.getValue()))
-                            .orElseThrow(() -> new RuntimeException("Missing " + v.destination() + " for " + data.getDataField() + ": " + data.getValue()));
-                })
-                .to(DATA_COLLECT_RESULT_TOPIC, Produced.with(Serdes.String(), SerdeFactory.Json(CollectEventResponseV1.class)));
-    }
+    private CollectEventResponseV1 collectData(CollectEventRequestV1 event) {
+        var dataProvider = dataProviders.stream()
+                .filter(dp -> dp.supports(event))
+                .findFirst().orElseThrow(() -> new RuntimeException("No supported data provider"));
 
-    @Autowired
-    void userParentIdStream(StreamsBuilder streamsBuilder) {
-        streamsBuilder
-                .stream(DATA_COLLECT_REQUEST_TOPIC, Consumed.with(Serdes.String(), SerdeFactory.Json(CollectEventRequestV1.class)))
-                .filter((k, v) -> DataField.USER_ID.equals(v.source()))
-                .filter((k, v) -> DataField.USER_PARENT_ID.equals(v.destination()))
-                .peek((k, v) -> log.info("---> PROCESSING: " + v))
-                .mapValues((k, v) -> {
-                    var data = new Data(v.source(), v.sourceValue());
-                    return userParentIdProvider.get(data).map(d -> new CollectEventResponseV1(v.orderId(), v.source(), v.destination(), v.sourceValue(), d.getValue()))
-                            .orElseThrow(() -> new RuntimeException("Missing " + v.destination() + " for " + data.getDataField() + ": " + data.getValue()));
-                })
-                .to(DATA_COLLECT_RESULT_TOPIC, Produced.with(Serdes.String(), SerdeFactory.Json(CollectEventResponseV1.class)));
-    }
+        var inputData = new Data(event.source(), event.sourceValue());
+        var outputModel = event.destination();
+        var outputData = dataProvider.get(inputData, outputModel).stream()
+                .map(data -> new CollectEventResponseV1.DestinationData(data.getDataField(), data.getValue()))
+                .collect(Collectors.toSet());
 
-    @Autowired
-    void userParentFirstnameStream(StreamsBuilder streamsBuilder) {
-        streamsBuilder
-                .stream(DATA_COLLECT_REQUEST_TOPIC, Consumed.with(Serdes.String(), SerdeFactory.Json(CollectEventRequestV1.class)))
-                .filter((k, v) -> DataField.USER_PARENT_ID.equals(v.source()))
-                .filter((k, v) -> DataField.USER_PARENT_FIRSTNAME.equals(v.destination()))
-                .peek((k, v) -> log.info("---> PROCESSING: " + v))
-                .mapValues((k, v) -> {
-                    var data = new Data(v.source(), v.sourceValue());
-                    return userParentFirstnameProvider.get(data).map(d -> new CollectEventResponseV1(v.orderId(), v.source(), v.destination(), v.sourceValue(), d.getValue()))
-                            .orElseThrow(() -> new RuntimeException("Missing " + v.destination() + " for " + data.getDataField() + ": " + data.getValue()));
-                })
-                .to(DATA_COLLECT_RESULT_TOPIC, Produced.with(Serdes.String(), SerdeFactory.Json(CollectEventResponseV1.class)));
-    }
-
-    @Autowired
-    void userParentLastnameStream(StreamsBuilder streamsBuilder) {
-        streamsBuilder
-                .stream(DATA_COLLECT_REQUEST_TOPIC, Consumed.with(Serdes.String(), SerdeFactory.Json(CollectEventRequestV1.class)))
-                .filter((k, v) -> DataField.USER_PARENT_ID.equals(v.source()))
-                .filter((k, v) -> DataField.USER_PARENT_LASTNAME.equals(v.destination()))
-                .peek((k, v) -> log.info("---> PROCESSING: " + v))
-                .mapValues((k, v) -> {
-                    var data = new Data(v.source(), v.sourceValue());
-                    return userParentLastnameProvider.get(data).map(d -> new CollectEventResponseV1(v.orderId(), v.source(), v.destination(), v.sourceValue(), d.getValue()))
-                            .orElseThrow(() -> new RuntimeException("Missing " + v.destination() + " for " + data.getDataField() + ": " + data.getValue()));
-                })
-                .to(DATA_COLLECT_RESULT_TOPIC, Produced.with(Serdes.String(), SerdeFactory.Json(CollectEventResponseV1.class)));
+        return event.response(outputData);
     }
 }

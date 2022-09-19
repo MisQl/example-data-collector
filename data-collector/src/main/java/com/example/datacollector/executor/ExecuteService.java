@@ -1,12 +1,13 @@
-package com.example.datacollector.core;
+package com.example.datacollector.executor;
 
+import com.example.datacollector.core.Data;
+import com.example.datacollector.core.DataField;
 import com.example.datacollector.order.*;
 import com.example.datacollector.strategy.StepsProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -22,12 +23,11 @@ public class ExecuteService {
 
     @SneakyThrows
     public Set<OrderResult> collectData(Set<DataField> inputModel, Set<DataField> outputModel, Set<OrderRequest> orderRequests) {
-        var orderSteps = outputModel.stream()
-                .map(output -> stepsProvider.calculateSteps(inputModel, output))
-                .collect(Collectors.toSet());
+        var steps = stepsProvider.calculateSteps(inputModel, outputModel);
 
         var orderIds = orderRequests.stream()
-                .map(orderRequest -> orderService.collect(orderRequest, outputModel, orderSteps))
+                .map(OrderRequest::getData)
+                .map(inputData -> orderService.collect(inputData, outputModel, steps))
                 .collect(Collectors.toSet());
 
         var isDone = false;

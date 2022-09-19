@@ -1,7 +1,9 @@
-package com.example.datacollector.core;
+package com.example.datacollector.executor;
 
-import com.example.datacollector.dto.ExecuteRequestDTO;
-import com.example.datacollector.dto.ExecuteResponseDTO;
+import com.example.datacollector.core.Data;
+import com.example.datacollector.core.DataField;
+import com.example.datacollector.executor.dto.ExecuteRequestDTO;
+import com.example.datacollector.executor.dto.ExecuteResponseDTO;
 import com.example.datacollector.order.OrderRequest;
 import com.example.datacollector.order.OrderResult;
 import org.springframework.stereotype.Component;

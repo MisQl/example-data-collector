@@ -1,7 +1,7 @@
-package com.example.datacollector.core;
+package com.example.datacollector.executor;
 
-import com.example.datacollector.dto.ExecuteRequestDTO;
-import com.example.datacollector.dto.ExecuteResponseDTO;
+import com.example.datacollector.executor.dto.ExecuteRequestDTO;
+import com.example.datacollector.executor.dto.ExecuteResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

@@ -2,5 +2,11 @@ package com.example.event;
 
 import com.example.datacollector.core.DataField;
 
-public record CollectEventResponseV1(String orderId, DataField source, DataField destination, Object sourceValue, Object destinationValue) {
+import java.util.Set;
+
+public record CollectEventResponseV1(String orderId, DataField source, Set<DataField> destination, Object sourceValue, Set<DestinationData> destinationData) {
+
+    public record DestinationData(DataField destination, Object destinationValue) {
+
+    }
 }

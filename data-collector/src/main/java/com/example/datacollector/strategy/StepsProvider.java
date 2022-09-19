@@ -7,5 +7,5 @@ import java.util.Set;
 
 public interface StepsProvider {
 
-    List<DataField> calculateSteps(Set<DataField> source, DataField destination);
+    List<Step> calculateSteps(Set<DataField> source, Set<DataField> destination);
 }

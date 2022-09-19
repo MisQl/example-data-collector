@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.Set;
+
 import static com.example.datacollector.kafka.KafkaTopics.DATA_COLLECT_REQUEST_TOPIC;
 
 @Component
@@ -14,7 +16,7 @@ public class EventPublisher {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    public void send(String orderId, DataField source, DataField destination, Object sourceValue) {
+    public void send(String orderId, DataField source, Set<DataField> destination, Object sourceValue) {
         var event = new CollectEventRequestV1(orderId, source, destination, sourceValue);
         kafkaTemplate.send(DATA_COLLECT_REQUEST_TOPIC, orderId, event);
     }

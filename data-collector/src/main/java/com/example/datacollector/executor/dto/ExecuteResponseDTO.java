@@ -1,4 +1,4 @@
-package com.example.datacollector.dto;
+package com.example.datacollector.executor.dto;
 
 import com.example.datacollector.core.DataField;
 

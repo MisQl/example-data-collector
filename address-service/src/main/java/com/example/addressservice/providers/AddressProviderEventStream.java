@@ -2,7 +2,7 @@ package com.example.addressservice.providers;
 
 import com.example.addressservice.kafka.SerdeFactory;
 import com.example.datacollector.core.Data;
-import com.example.datacollector.core.DataField;
+import com.example.datacollector.core.DataProvider;
 import com.example.event.CollectEventRequestV1;
 import com.example.event.CollectEventResponseV1;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +14,9 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static com.example.addressservice.kafka.KafkaTopics.DATA_COLLECT_REQUEST_TOPIC;
 import static com.example.addressservice.kafka.KafkaTopics.DATA_COLLECT_RESULT_TOPIC;
 
@@ -22,36 +25,29 @@ import static com.example.addressservice.kafka.KafkaTopics.DATA_COLLECT_RESULT_T
 @RequiredArgsConstructor
 public class AddressProviderEventStream {
 
-    private final AddressCityProvider addressCityProvider;
-    private final AddressStreetProvider addressStreetProvider;
+    private final List<DataProvider> dataProviders;
 
     @Autowired
-    void addressCityStream(StreamsBuilder streamsBuilder) {
+    void addressStream(StreamsBuilder streamsBuilder) {
         streamsBuilder
                 .stream(DATA_COLLECT_REQUEST_TOPIC, Consumed.with(Serdes.String(), SerdeFactory.Json(CollectEventRequestV1.class)))
-                .filter((k, v) -> DataField.ADDRESS_ID.equals(v.source()))
-                .filter((k, v) -> DataField.ADDRESS_CITY.equals(v.destination()))
-                .peek((k, v) -> log.info("---> PROCESSING: " + v))
-                .mapValues((k, v) -> {
-                    var data = new Data(v.source(), v.sourceValue());
-                    return addressCityProvider.get(data).map(d -> new CollectEventResponseV1(v.orderId(), v.source(), v.destination(), v.sourceValue(), d.getValue()))
-                            .orElseThrow(() -> new RuntimeException("Missing " + v.destination() + " for " + data.getDataField() + ": " + data.getValue()));
-                })
+                .filter((key, event) -> dataProviders.stream().anyMatch(dataProvider -> dataProvider.supports(event)))
+                .peek((key, event) -> log.info("---> PROCESSING: " + event))
+                .mapValues((k, v) -> collectData(v))
                 .to(DATA_COLLECT_RESULT_TOPIC, Produced.with(Serdes.String(), SerdeFactory.Json(CollectEventResponseV1.class)));
     }
 
-    @Autowired
-    void addressStreetStream(StreamsBuilder streamsBuilder) {
-        streamsBuilder
-                .stream(DATA_COLLECT_REQUEST_TOPIC, Consumed.with(Serdes.String(), SerdeFactory.Json(CollectEventRequestV1.class)))
-                .filter((k, v) -> DataField.ADDRESS_ID.equals(v.source()))
-                .filter((k, v) -> DataField.ADDRESS_STREET.equals(v.destination()))
-                .peek((k, v) -> log.info("---> PROCESSING: " + v))
-                .mapValues((k, v) -> {
-                    var data = new Data(v.source(), v.sourceValue());
-                    return addressStreetProvider.get(data).map(d -> new CollectEventResponseV1(v.orderId(), v.source(), v.destination(), v.sourceValue(), d.getValue()))
-                            .orElseThrow(() -> new RuntimeException("Missing " + v.destination() + " for " + data.getDataField() + ": " + data.getValue()));
-                })
-                .to(DATA_COLLECT_RESULT_TOPIC, Produced.with(Serdes.String(), SerdeFactory.Json(CollectEventResponseV1.class)));
+    private CollectEventResponseV1 collectData(CollectEventRequestV1 event) {
+        var dataProvider = dataProviders.stream()
+                .filter(dp -> dp.supports(event))
+                .findFirst().orElseThrow(() -> new RuntimeException("No supported data provider"));
+
+        var inputData = new Data(event.source(), event.sourceValue());
+        var outputModel = event.destination();
+        var outputData = dataProvider.get(inputData, outputModel).stream()
+                .map(data -> new CollectEventResponseV1.DestinationData(data.getDataField(), data.getValue()))
+                .collect(Collectors.toSet());
+
+        return event.response(outputData);
     }
 }
