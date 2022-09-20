@@ -12,7 +12,9 @@ public interface DataProvider {
 
     default boolean supports(CollectEventRequestV1 event) {
         var supportedMappings = supports();
+        var source = event.source();
+        var destination = event.destination();
         return supportedMappings.stream()
-                .anyMatch(supportedMapping -> supportedMapping.getInputModel().equals(event.source()) && supportedMapping.getOutputModel().containsAll(event.destination()));
+                .anyMatch(supportedMapping -> supportedMapping.getInputModel().equals(source) && supportedMapping.getOutputModel().containsAll(destination));
     }
 }
